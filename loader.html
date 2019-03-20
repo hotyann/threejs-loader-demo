@@ -31,20 +31,20 @@
 <body>
 <div id="stage"></div>
 <script type="text/javascript" src="https://cdn.bootcss.com/eruda/1.2.6/eruda.min.js"></script>
-<script type="text/javascript" src="js/loader/three.js"></script>
-<script type="text/javascript" src="js/loader/inflate.min.js"></script>
+<script type="text/javascript" src="js/three.js"></script>
+<script type="text/javascript" src="js/inflate.min.js"></script>
+<script type="text/javascript" src="js/OrbitControls.js"></script>
 <script type="text/javascript" src="js/loader/FBXLoader.js"></script>
 <script type="text/javascript" src="js/loader/OBJLoader.js"></script>
 <script type="text/javascript" src="js/loader/MTLLoader.js"></script>
 <script type="text/javascript" src="js/loader/TGALoader.js"></script>
-<script type="text/javascript" src="js/loader/OrbitControls.js"></script>
 <script type="text/javascript">
     eruda.init();
 
     var u = navigator.userAgent;
-    var isAndroid = u.indexOf('Android') > -1 || u.indexOf('Adr') > -1; //android终端
-    var isiOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/); //ios终端
-    var isWeiXin = !!u.match(/MicroMessenger/i); //微信
+    var isAndroid = u.indexOf('Android') > -1 || u.indexOf('Adr') > -1; // android终端
+    var isiOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/); // ios终端
+    var isWeiXin = !!u.match(/MicroMessenger/i); // 微信
 
     var stage = document.querySelector('#stage');
     var container;
