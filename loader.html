@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0,user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <title>THREE.js Loader</title>
+    <style>
+        html, body{
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            font-family: Helvetica;
+        }
+        #stage, video, canvas{
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        canvas{
+            z-index: 99;
+        }
+    </style>
+</head>
+<body>
+<div id="stage"></div>
+<script type="text/javascript" src="https://cdn.bootcss.com/eruda/1.2.6/eruda.min.js"></script>
+<script type="text/javascript" src="js/loader/three.js"></script>
+<script type="text/javascript" src="js/loader/inflate.min.js"></script>
+<script type="text/javascript" src="js/loader/FBXLoader.js"></script>
+<script type="text/javascript" src="js/loader/OBJLoader.js"></script>
+<script type="text/javascript" src="js/loader/MTLLoader.js"></script>
+<script type="text/javascript" src="js/loader/TGALoader.js"></script>
+<script type="text/javascript" src="js/loader/OrbitControls.js"></script>
+<script type="text/javascript">
+    eruda.init();
+
+    var u = navigator.userAgent;
+    var isAndroid = u.indexOf('Android') > -1 || u.indexOf('Adr') > -1; //android终端
+    var isiOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/); //ios终端
+    var isWeiXin = !!u.match(/MicroMessenger/i); //微信
+
+    var stage = document.querySelector('#stage');
+    var container;
+    var scene, camera, renderer, controls;
+    var SCREEN_WIDTH =  window.innerWidth;
+    var SCREEN_HEIGHT = window.innerHeight;
+    var angle = 90;
+    var nearest = 1;
+    var farthest = 1000;
+    var mixers = new Array();
+    var clock = new THREE.Clock();
+
+    init();
+    initSourceWebcam();
+
+    function init(){
+        container = document.createElement('div');
+        stage.appendChild(container);
+        // 创建场景
+        scene = new THREE.Scene();
+        // 创建相机
+        camera =  new THREE.PerspectiveCamera(angle, SCREEN_WIDTH / SCREEN_HEIGHT, nearest, farthest);
+        camera.position.set(20, 20, 30);
+        // 环境光
+        scene.add(new THREE.AmbientLight(4210752, 3));
+        // 平行光
+        var light = new THREE.DirectionalLight(16777215, 1);
+        light.position.set(0, 50, 50);
+        scene.add(light);
+        // 坐标系
+        var axes = new THREE.AxisHelper(30);
+        scene.add(axes);
+
+        // 加载提示
+        var manager = new THREE.LoadingManager();
+        manager.onProgress = function(item, loaded, total){
+            console.log(item, loaded, total);
+        };
+
+        var onProgress = function(xhr){
+            if(xhr.lengthComputable){
+                var percentComplete = xhr.loaded / xhr.total * 100;
+                console.log(Math.round(percentComplete, 2) + '% downloaded');
+            }
+        };
+
+        var onError = function(xhr){
+            console.error(xhr);
+        };
+
+
+
+        var fbx_loader = new THREE.FBXLoader(manager);
+
+        // fbx静态模型
+        fbx_loader.load('./models/miku/miku.fbx', function(object){
+            object.scale.multiplyScalar(.1);
+
+            scene.add(object);
+        }, onProgress, onError);
+
+        // fbx动画
+        /*fbx_loader.load('./models/gf/run.fbx', function(object){
+
+            object.mixer = new THREE.AnimationMixer(object);
+            mixers.push(object.mixer);
+
+            var action = object.mixer.clipAction(object.animations[0]);
+            action.play();
+
+            object.scale.multiplyScalar(.5);
+            object.position.set(-3, 0, 0);
+
+            scene.add(object);
+        }, onProgress, onError);*/
+
+
+
+        /*var js_loader = new THREE.JSONLoader(manager);
+
+        // json静态模型一
+        js_loader.load('./models/hmj/frame001.json', function(geometry, materials){
+            var material = new THREE.MultiMaterial(materials);
+            var mesh = new THREE.Mesh(geometry, material);
+            mesh.scale.multiplyScalar(.06);
+            scene.add(mesh);
+        }, onProgress, onError);
+
+        // json静态模型二
+        var object_loader = new THREE.ObjectLoader(manager);
+        object_loader.load('./models/teapot-claraio.json', function(object){
+            object.scale.multiplyScalar(5);
+            scene.add(object);
+        });
+
+        // json动画
+        js_loader.load('./models/body/climb.js', function(geometry, materials){
+
+            for(var i = 0; i < materials.length; i++){
+                materials[i].skinning = true;
+            }
+            var material = new THREE.MultiMaterial(materials);
+            var mesh = new THREE.SkinnedMesh(geometry, material);
+            var mixer = new THREE.AnimationMixer(mesh);
+            mixers.push(mixer);
+            mixer.clipAction(geometry.animations[0]).play();
+
+            mesh.scale.multiplyScalar(.05);
+            mesh.lookAt(new THREE.Vector3(0, 0, 0));
+            mesh.position.set(3, 0, 0);
+
+            scene.add(mesh);
+        }, onProgress, onError);*/
+
+
+
+        /*var obj_loader = new THREE.OBJLoader(manager);
+        obj_loader.setPath('./models/mooncake/');
+
+        // obj静态模型一
+        var tga_loader = new THREE.TGALoader();
+        var material = new THREE.MeshPhongMaterial({
+            map: tga_loader.load('./models/mooncake/Sofa_OS_0727_01___Default_Diffuse.tga'),
+            normalMap: tga_loader.load('./models/mooncake/Sofa_OS_0727_01___Default_Normal.tga'),
+            specularMap: tga_loader.load('./models/mooncake/Sofa_OS_0727_01___Default_S.tga'),
+            bumpMap: tga_loader.load('./models/mooncake/Sofa_OS_0727_01___Default_Bump.tga')
+        });
+
+        obj_loader.load('mooncake.obj', function(group){
+
+            var geometry = group.children[0].geometry;
+            geometry.attributes.uv2 = geometry.attributes.uv;
+            geometry.center();
+
+            var mesh = new THREE.Mesh(geometry, material);
+            mesh.scale.multiplyScalar(.1);
+            scene.add(mesh);
+        }, onProgress, onError);
+
+        // obj静态模型二
+        THREE.Loader.Handlers.add(/\.tga$/i, new THREE.TGALoader());
+        var mtl_loader = new THREE.MTLLoader();
+
+        mtl_loader.setPath('./models/mooncake/');
+        mtl_loader.load('mooncake.mtl', function(materials){
+            materials.preload();
+
+            obj_loader.setMaterials(materials);
+            obj_loader.load('mooncake.obj', function(object){
+                object.scale.multiplyScalar(.1);
+                scene.add(object);
+            }, onProgress, onError);
+        });*/
+
+        // 创建渲染器
+        renderer = new THREE.WebGLRenderer({
+            antialias: true,    // 平滑效果
+            alpha: true,    // canvas背景透明
+        });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+        container.appendChild(renderer.domElement);
+
+        // 创建控制器
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.target.set(0, 0, 0);
+
+        animate();
+
+        window.addEventListener('resize', onWindowResize, false);
+    }
+    
+    function animate(){
+        requestAnimationFrame(animate);
+        render();
+    }
+
+    function render(){
+        var delta = clock.getDelta();
+        if (mixers.length > 0) {
+            for (var i = 0; i < mixers.length; i ++) {
+                mixers[i].update(delta);
+            }
+        }
+        controls.update();
+        renderer.render( scene, camera );
+    }
+
+    // 窗口改变重置摄像头
+    function onWindowResize(){
+        SCREEN_WIDTH = window.innerWidth;
+        SCREEN_HEIGHT = window.innerHeight;
+        renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+        camera.aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
+        camera.updateProjectionMatrix();
+    }
+
+    // 获取视频流
+    function initSourceWebcam(){
+        // check API is available
+        if(navigator.mediaDevices === undefined || navigator.mediaDevices.enumerateDevices === undefined || navigator.mediaDevices.getUserMedia === undefined){
+            console.log('Not Support')
+        }
+        else {
+            // get available devices
+            navigator.mediaDevices.enumerateDevices().then(function(devices){
+                if(isiOS){
+                    navigator.mediaDevices.getUserMedia({
+                        audio: false,
+                        video: {
+                            facingMode: 'environment'
+                        }
+                    }).then(successFunc).catch(errorFunc);
+                }
+                else{
+                    var videoSourceId;
+                    for(var i = 0; i < devices.length; i++){
+                        var deviceInfo = devices[i];
+                        if(deviceInfo.kind == "videoinput" && deviceInfo.label.split(', ')[1] == "facing back"){
+                            videoSourceId = deviceInfo.deviceId;
+                        }
+                    }
+                    navigator.mediaDevices.getUserMedia({
+                        audio: false,
+                        video: {
+                            optional: [{sourceId: videoSourceId}]
+                        }
+                    }).then(successFunc).catch(errorFunc);
+                }
+            }).catch(errorFunc);
+        }
+    }
+
+    // 摄像头调起成功
+    function successFunc(stream){
+        var domElement = document.createElement('video');
+        domElement.setAttribute('autoplay', '');
+        domElement.setAttribute('muted', '');
+        domElement.setAttribute('playsinline', '');
+        domElement.style.width = document.documentElement.clientWidth + 'px';
+        domElement.style.height = document.documentElement.clientHeight + 'px';
+
+        domElement.srcObject = stream;
+        document.body.addEventListener('click', function(){
+            domElement.play();
+        });
+
+        // wait until the video stream is ready
+        var interval = setInterval(function(){
+            if(!domElement.videoWidth){
+                return;
+            }
+
+            clearInterval(interval);
+            stage.appendChild(domElement);
+        }, 1000/50);
+    }
+
+    // 摄像头调起失败
+    function errorFunc(err){
+        console.log(err);
+    }
+</script>
+</body>
+</html>
